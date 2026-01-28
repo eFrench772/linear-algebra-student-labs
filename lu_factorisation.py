@@ -6,30 +6,30 @@ import time
 def lu_factorisation(A):
     n, m = A.shape
     if n != m:
-        raise ValueError(f"Matrix A is not square {A.shape=}")
+        raise ValueError(f"matrix A is not square {A.shape=}")
 
-    # construct arrays of zeros
+    #construct arrays of zeros
     L, U = np.zeros_like(A, dtype=float), np.zeros_like(A, dtype=float)
 
-    # Set diagonal of L to 1 (unit diagonal)
+    #set diagonal of L to 1 (unit diagonal)
     for i in range(n):
         L[i, i] = 1
     
-    # Compute U's first row
+    #compute U's first row
     for j in range(n):
         U[0, j] = A[0, j]
     
-    # Compute L's first column (below diagonal)
+    #l's first column
     for i in range(1, n):
         L[i, 0] = A[i, 0] / U[0, 0]
     
-    # Compute remaining elements
+    #remaining elements
     for i in range(1, n):
-        # Compute U[i, j] for j >= i (upper triangular part)
+        #U[i, j] for j >= i
         for j in range(i, n):
             U[i, j] = A[i, j] - sum(L[i, k] * U[k, j] for k in range(i))
         
-        # Compute L[i, j] for j < i (lower triangular part, below diagonal)
+        #L[i, j] for j < i
         for j in range(i + 1, n):
             L[j, i] = (A[j, i] - sum(L[j, k] * U[k, i] for k in range(i))) / U[i, i]
     
@@ -80,21 +80,21 @@ def lu_solve(A, b):
 
 def gaussian_elimination(A, b):
     n = len(b)
-    # Create augmented matrix
+    #create augmented matrix
     Ab = np.column_stack([A.copy(), b.copy()])
     
-    # Forward elimination
+    #forward elimination
     for i in range(n):
-        # Partial pivoting
+        #partial pivoting
         max_row = i + np.argmax(np.abs(Ab[i:, i]))
         Ab[[i, max_row]] = Ab[[max_row, i]]
         
-        # Eliminate column entries below pivot
+        #eliminate column entries below pivot
         for j in range(i + 1, n):
             factor = Ab[j, i] / Ab[i, i]
             Ab[j, i:] -= factor * Ab[i, i:]
     
-    # Back substitution
+    #back substitution
     x = np.zeros(n, dtype=float)
     for i in range(n - 1, -1, -1):
         x[i] = (Ab[i, -1] - sum(Ab[i, j] * x[j] for j in range(i + 1, n))) / Ab[i, i]
@@ -110,26 +110,25 @@ def generate_safe_system(n):
 
 
 if __name__ == "__main__":
-    # First, compute the determinant of A_large
-    print("Computing determinant of A_large...")
+    #compute the determinant of A_large
     A_large, b_large, x_large = generate_safe_system(100)
     det_A_large = determinant(A_large)
-    print(f"Determinant of A_large (100x100): {det_A_large}")
-    print(f"NumPy's determinant (verification): {np.linalg.det(A_large)}")
+    print(f"determinant of A_large (100x100): {det_A_large}")
+    print(f"determinant (verification): {np.linalg.det(A_large)}")
     print("\n" + "="*60 + "\n")
     
-    # Then run the timing comparisons
+    #run the timing comparisons
     sizes = [2**j for j in range(1, 9)]  # Extended range for better comparison
     
     lu_times = []
     ge_times = []
     
-    print("Running timing comparisons...")
+    print("timing comparisons:")
     print(f"{'Size':<10} {'LU Time (s)':<15} {'GE Time (s)':<15}")
     print("-" * 40)
     
     for n in sizes:
-        # Generate a random system of linear equations of size n
+        #generate a random system of linear equations of size n
         A, b, x_true = generate_safe_system(n)
         
         start = time.time()
@@ -147,7 +146,7 @@ if __name__ == "__main__":
         assert np.allclose(x_lu, x_true), f"LU solution incorrect for n={n}"
         assert np.allclose(x_ge, x_true), f"GE solution incorrect for n={n}"
     
-    # Create plot 1: Absolute runtimes
+    #create plot
     plt.figure(figsize=(10, 6))
     plt.plot(sizes, lu_times, 'o-', label='LU Factorisation', linewidth=2, markersize=8)
     plt.plot(sizes, ge_times, 's-', label='Gaussian Elimination', linewidth=2, markersize=8)
